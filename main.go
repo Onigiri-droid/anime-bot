@@ -3,10 +3,18 @@ package main
 import (
     "fmt"
     "os"
+    "time"
 
     "github.com/mymmrac/telego"
     th "github.com/mymmrac/telego/telegohandler"
     tu "github.com/mymmrac/telego/telegoutil"
+)
+
+var (
+    episodeTracker     = make(map[int]int)
+    chatIDs            = []int64{}
+    lastRequestTimes   = make(map[int64]time.Time)
+    requestInterval    = 12 * time.Hour // Интервал между запросами свежей подборки
 )
 
 func main() {
@@ -27,16 +35,23 @@ func main() {
     bh.Handle(startHandler, th.CommandEqual("start"))
     bh.Handle(freshAnimeHandler, th.TextEqual("Свежая подборка"))
 
+    go func() {
+        for {
+            checkForNewEpisodes(bot)
+            time.Sleep(1 * time.Hour)
+        }
+    }()
+
     bh.Start()
 }
 
 func startHandler(bot *telego.Bot, update telego.Update) {
     chatID := tu.ID(update.Message.Chat.ID)
+    chatIDs = append(chatIDs, update.Message.Chat.ID)
 
     keyboard := tu.Keyboard(
         tu.KeyboardRow(
             tu.KeyboardButton("Свежая подборка"),
-            tu.KeyboardButton("Подписки"),
         ),
     ).WithResizeKeyboard()
 
@@ -53,4 +68,29 @@ func startHandler(bot *telego.Bot, update telego.Update) {
     )
 
     _, _ = bot.SendMessage(message)
+}
+
+func checkForNewEpisodes(bot *telego.Bot) {
+    animes, err := getAnimesFromShikimori()
+    if err != nil {
+        fmt.Println("Failed to fetch animes:", err)
+        return
+    }
+
+    sortAnimesByScore(animes)
+
+    for _, anime := range animes {
+        previousEpisodes, exists := episodeTracker[anime.Id]
+        if !exists || anime.Episode > previousEpisodes {
+            episodeTracker[anime.Id] = anime.Episode
+            for _, chatID := range chatIDs {
+                photoMessage := tu.Photo(
+                    tu.ID(chatID),
+                    tu.FileFromURL("https://shikimori.one" + anime.Image.Original),
+                ).WithCaption(formatAnime(anime))
+
+                _, _ = bot.SendPhoto(photoMessage)
+            }
+        }
+    }
 }

@@ -55,8 +55,12 @@ func getAnimesFromShikimori() ([]Anime, error) {
         SetResult(&animes).
         Get(apiURL)
 
-    if err != nil || resp.StatusCode() != 200 {
+    if err != nil {
         return nil, fmt.Errorf("failed to fetch animes: %v", err)
+    }
+
+    if resp.StatusCode() != 200 {
+        return nil, fmt.Errorf("failed to fetch animes: received status code %d", resp.StatusCode())
     }
 
     return animes, nil
@@ -71,9 +75,14 @@ func sortAnimesByScore(animes []Anime) {
 }
 
 func formatAnime(anime Anime) string {
+    title := anime.Title
+    if title == "" {
+        title = anime.Name
+    }
+
     episodesAll := fmt.Sprintf("%d", anime.EpisodesAll)
     if anime.EpisodesAll == 0 {
         episodesAll = "?"
     }
-    return fmt.Sprintf("%s\nРейтинг: %s ⭐️\nСерии: %d из %s 📺\nСсылка: https://shikimori.one/animes/%d", anime.Title, anime.Score, anime.Episode, episodesAll, anime.Id)
+    return fmt.Sprintf("%s\nРейтинг: %s ⭐️\nСерии: %d из %s 📺\nСсылка: https://shikimori.one/animes/%d", title, anime.Score, anime.Episode, episodesAll, anime.Id)
 }

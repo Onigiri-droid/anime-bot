@@ -1,19 +1,34 @@
 package main
 
 import (
-	"fmt"
-	
+    "time"
     "github.com/mymmrac/telego"
     tu "github.com/mymmrac/telego/telegoutil"
 )
 
 func freshAnimeHandler(bot *telego.Bot, update telego.Update) {
-    chatID := tu.ID(update.Message.Chat.ID)
+    chatID := update.Message.Chat.ID
+    currentTime := time.Now()
+
+    // Проверка времени последнего запроса
+    if lastRequestTime, exists := lastRequestTimes[chatID]; exists {
+        if currentTime.Sub(lastRequestTime) < requestInterval {
+            message := tu.Message(
+                tu.ID(chatID),
+                "Вы можете запросить свежую подборку раз в 12 часов ⏰.\nПопробуйте позже ⌛️",
+            )
+            _, _ = bot.SendMessage(message)
+            return
+        }
+    }
+
+    // Обновляем время последнего запроса
+    lastRequestTimes[chatID] = currentTime
 
     animes, err := getAnimesFromShikimori()
     if err != nil {
         message := tu.Message(
-            chatID,
+            tu.ID(chatID),
             "Не удалось получить данные о аниме. Попробуйте позже.",
         )
         _, _ = bot.SendMessage(message)
@@ -22,20 +37,11 @@ func freshAnimeHandler(bot *telego.Bot, update telego.Update) {
 
     sortAnimesByScore(animes)
 
-    for i, anime := range animes {
-        if i >= 50 {
-            break
-        }
-
+    for _, anime := range animes {
         photoMessage := tu.Photo(
-            chatID,
+            tu.ID(chatID),
             tu.FileFromURL("https://shikimori.one" + anime.Image.Original),
-        ).WithCaption(formatAnime(anime)).
-            WithReplyMarkup(tu.InlineKeyboard(
-                tu.InlineKeyboardRow(
-                    tu.InlineKeyboardButton("Подписаться").WithCallbackData(fmt.Sprintf("subscribe_%d", anime.Id)),
-                ),
-            ))
+        ).WithCaption(formatAnime(anime))
 
         _, _ = bot.SendPhoto(photoMessage)
     }
