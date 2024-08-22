@@ -1,10 +1,9 @@
-// handler.go
 package main
 
 import (
+    "fmt"
     "time"
     "github.com/mymmrac/telego"
-    "fmt"
     tu "github.com/mymmrac/telego/telegoutil"
 )
 

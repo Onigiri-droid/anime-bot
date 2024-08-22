@@ -80,19 +80,10 @@ func formatAnime(anime Anime) string {
 	if title == "" {
 		title = anime.Name
 	}
-
-<<<<<<< HEAD
+	
     episodesAll := fmt.Sprintf("%d", anime.EpisodesAll)
     if anime.EpisodesAll == 0 {
         episodesAll = "?"
     }
     return fmt.Sprintf("%s\nРейтинг: %s ⭐️\nСерии: %d из %s 📺\nСсылка: https://shikimori.one/animes/%d", title, anime.Score, anime.Episode, episodesAll, anime.Id)
 }
-=======
-	episodesAll := fmt.Sprintf("%d", anime.EpisodesAll)
-	if anime.EpisodesAll == 0 {
-		episodesAll = "?"
-	}
-	return fmt.Sprintf("%s\nРейтинг: %s ⭐️\nСерии: %d из %s 📺\nСсылка: https://shikimori.one/animes/%d", title, anime.Score, anime.Episode, episodesAll, anime.Id)
-}
->>>>>>> 7d58eae9377343d3a7cccc3eac076519df88520c
