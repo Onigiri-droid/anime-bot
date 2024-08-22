@@ -3,6 +3,7 @@ package main
 import (
     "time"
     "github.com/mymmrac/telego"
+    "fmt"
     tu "github.com/mymmrac/telego/telegoutil"
 )
 
@@ -43,6 +44,10 @@ func freshAnimeHandler(bot *telego.Bot, update telego.Update) {
             tu.FileFromURL("https://shikimori.one" + anime.Image.Original),
         ).WithCaption(formatAnime(anime))
 
-        _, _ = bot.SendPhoto(photoMessage)
+        _, err := bot.SendPhoto(photoMessage)
+        if err != nil {
+            fmt.Printf("Failed to send message to chat %d: %v\n", chatID, err)
+            // Логика повторной отправки может быть добавлена здесь
+        }
     }
 }
